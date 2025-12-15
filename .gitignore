@@ -1,0 +1,53 @@
+# Virtual environment
+venv/
+.env/
+.venv/
+
+# Python cache and compiled files
+__pycache__/
+*/__pycache__/*
+*.py[cod]
+*$py.class
+
+# IDE and editor directories
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+.storages/
+*.storages/
+.storages
+*.storages
+.storages/postgresdata/
+.storages/redisdata/
+
+# Environment variables
+.env
+.env.local
+.env.dev
+.env.prod
+
+# Distribution and build files
+/dist/
+/build/
+*.egg-info/
+*.egg
+
+# pytest and coverage
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Local development files
+local_settings.py

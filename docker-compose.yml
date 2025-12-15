@@ -1,0 +1,105 @@
+x-jsonlog-driver: &jsonlog-driver
+  logging:
+    driver: "json-file"
+    options:
+      # max-size: 10m
+      # max-file: "5"
+      tag: "{{.ImageName}}|{{.Name}}|{{.ImageFullID}}|{{.FullID}}"
+
+x-build-app: &build-app
+  image: pers-opros-api--app
+  build:
+    args:
+      APP_ROOT: /app
+      APP_CONTAINER_NAME: app
+      # ENVIRONMENT: development
+      APP_HOSTNAME: bfo-parser-api
+    context: ./
+    dockerfile: .docker/Dockerfiles/app.Dockerfile
+
+x-backend: &backend
+  <<: [*build-app, *common, *jsonlog-driver]
+  working_dir: /app
+  environment:
+    TZ: Asia/Krasnoyarsk
+  volumes:
+    - ./:/app
+    - ./.docker/user.conf/.gitconfig:/root/.gitconfig
+    # - ./.docker/ssl:/etc/ssl
+  networks:
+    - bfo-parser
+
+services:
+  bfo-parser-api--app:
+    <<: *backend
+    ulimits:
+      core:
+        hard: 0
+        soft: 0
+    container_name: bfo-parser-api--app
+    # command: bash -c "uvicorn app.startup:app --host 0.0.0.0 --port 8014 --proxy-headers --forwarded-allow-ips='*' --workers 2"
+    command: bash -c "uvicorn app.startup:app --host 0.0.0.0 --port 8014 --reload --proxy-headers --forwarded-allow-ips='*' --log-level debug"
+    depends_on:
+      - bfo-parser-api--db
+
+  bfo-parser-api--webserver:
+    <<: *jsonlog-driver
+    image: bfo-parser-api--webserver
+    container_name: bfo-parser-api--webserver
+    build:
+      args:
+        APP_CONTAINER_NAME: app
+        APP_ROOT: /app
+        # ENVIRONMENT: development
+        APP_HOSTNAME: docker-dmz
+      context: .
+      dockerfile: .docker/Dockerfiles/webserver.Dockerfile
+    environment:
+      TZ: Asia/Krasnoyarsk
+    restart: unless-stopped
+    ports:
+      - "28282:80"
+      - "24282:443"
+    volumes:
+      - ./:/app
+      - ./ssl:/etc/ssl/
+      # - static_data:/app/static/
+    networks:
+      - bfo-parser
+
+  bfo-parser-api--db:
+    <<: *jsonlog-driver
+    image: postgres:15.3-alpine
+    container_name: bfo-parser-api--db
+    environment:
+      # - TZ=Asia/Krasnoyarsk
+      # - PGTZ=Asia/Krasnoyarsk
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_DATABASE}
+    ports:
+      - "${DB_PORT}:5432"
+    restart: always
+    volumes:
+      - ./.storages/postgresdata:/var/lib/postgresql/data
+    healthcheck:
+      test: >
+        sh -c "
+        pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}
+        "
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - bfo-parser
+
+volumes:
+  # ssl:
+  # static_data:
+  dbdata:
+  cache:
+    driver: local
+
+networks:
+  bfo-parser:
