@@ -1,0 +1,4 @@
+deb [trusted=yes] https://nexus.iss-reshetnev.ru/repository/debian-deb bookworm main
+#deb [trusted=yes] https://nexus.iss-reshetnev.ru/repository/debian-security bookworm/updates main
+deb [trusted=yes] https://nexus.iss-reshetnev.ru/repository/debian-deb bookworm-updates main
+deb [trusted=yes] https://nexus.iss-reshetnev.ru/repository/debian-deb bookworm-backports main

@@ -11,8 +11,9 @@ sys.path.append(str(pathlib.Path(__file__).resolve().parents[3]))
 # Imports from `app` should go after `path` patch
 from app.settings import settings  # isort:skip
 from app.db.sqlalchemy import Base, make_url_sync  # isort:skip
-# Import models to make them visible by alembic
-# import app.db.action.models  # isort:skip
+import app.db.organization.models  # isort:skip
+import app.db.report.models  # isort:skip
+import app.db.history.models  # isort:skip
 
 
 postgres_dsn = make_url_sync(settings.POSTGRES_DSN)
