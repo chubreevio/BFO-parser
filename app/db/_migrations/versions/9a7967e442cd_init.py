@@ -1,8 +1,8 @@
 """init
 
-Revision ID: c97168bb09b2
+Revision ID: 9a7967e442cd
 Revises: 
-Create Date: 2025-12-16 10:15:53.356655
+Create Date: 2025-12-17 11:06:43.554947
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'c97168bb09b2'
+revision: str = '9a7967e442cd'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -23,10 +23,9 @@ def upgrade() -> None:
     op.create_table('history',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('inn', sa.String(length=12), nullable=False),
-    sa.Column('request_ip', sa.String(length=45), nullable=True),
-    sa.Column('request_params', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('request', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('status_code', sa.Integer(), nullable=False),
-    sa.Column('response_body', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('response', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('started_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('finished_at', sa.DateTime(timezone=True), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_history')),
@@ -36,17 +35,19 @@ def upgrade() -> None:
     op.create_table('organizations',
     sa.Column('id', sa.Integer(), autoincrement=False, nullable=False),
     sa.Column('inn', sa.String(length=12), nullable=False),
-    sa.Column('info', postgresql.JSONB(astext_type=sa.Text()), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_organizations')),
     sa.UniqueConstraint('id', name=op.f('uq_organizations_id'))
     )
-    op.create_index(op.f('ix_organizations_inn'), 'organizations', ['inn'], unique=False)
+    op.create_index(op.f('ix_organizations_inn'), 'organizations', ['inn'], unique=True)
     op.create_table('reports',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('organization_id', sa.Integer(), nullable=False),
     sa.Column('report_year', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('present_date', sa.Date(), nullable=False),
+    sa.Column('organization_sheet', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('balance_sheet', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('financial_sheet', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.ForeignKeyConstraint(['organization_id'], ['organizations.id'], name=op.f('fk_reports_organization_id_organizations')),

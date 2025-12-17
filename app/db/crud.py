@@ -1,7 +1,4 @@
-"""CRUD implementation."""
-
 from typing import Any, Dict, TypeVar
-
 from sqlalchemy import delete, insert, select, update, func
 from sqlalchemy.inspection import inspect
 

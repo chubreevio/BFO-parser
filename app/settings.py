@@ -15,6 +15,7 @@ class AppSettings(BaseSettings):
     DEBUG: bool
     BFO_URL: str
     PROXY_URL: Optional[str] = None
+    REPORT_AVAILABLE_DAYS: int = 7
 
     # REDIS
     REDIS_HOST: str

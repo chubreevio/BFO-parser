@@ -13,12 +13,11 @@ class HistoryModel(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, unique=True)
     inn: Mapped[str] = mapped_column(String(12), index=True)
-    request_ip: Mapped[Optional[str]] = mapped_column(String(45))
-    request_params: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+    request: Mapped[Optional[Dict[str, Any]]] = mapped_column(
         JSONB, nullable=True
     )
     status_code: Mapped[int] = mapped_column(Integer)
-    response_body: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+    response: Mapped[Optional[Dict[str, Any]]] = mapped_column(
         JSONB, nullable=True
     )
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

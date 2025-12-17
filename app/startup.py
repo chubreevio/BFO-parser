@@ -1,23 +1,25 @@
-import asyncio_redis
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
+import asyncio_redis
 from alembic import command
 from alembic.config import Config
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
+from app.api.exception_handlers.bfo_api_exception_handler import (
+    bfo_api_exception_handler,
+)
+from app.api.exception_handlers.bfo_too_many_requests_exception_handler import (
+    bfo_too_many_requests_exception_handler,
+)
 from app.api.exception_handlers.value_error_handler import value_error_handler
 from app.api.middlewares.db_session import DbSessionMiddleware
-
-# from app.api.middlewares.error_handler import ErrorHandlerMiddleware
+from app.api.middlewares.error_handler import ErrorHandlerMiddleware
 from app.api.routers import router
-
-# from app.api.middlewares.error_handler import (
-#     ErrorHandlerMiddleware,
-# )
 from app.db.sqlalchemy import (
     build_db_session_factory,
     close_db_connections,
 )
+from app.exceptions import BfoApiException, BfoTooManyRequestsException
 from app.logger import logger
 from app.settings import settings
 
@@ -70,19 +72,23 @@ async def lifespan(fastapi_app: FastAPI) -> AsyncIterator[None]:
 
 def create_application() -> FastAPI:
     """Create configured server application instance."""
-    fastapi_app_instance = FastAPI(title="bfo parser", lifespan=lifespan)
+    fastapi_app = FastAPI(title="bfo parser", lifespan=lifespan)
 
-    # MIDDLEWARES (первый инициализированный = последний к выполнению)
-    fastapi_app_instance.add_middleware(DbSessionMiddleware)
-    # fastapi_app_instance.add_middleware(ErrorHandlerMiddleware)
+    # MIDDLEWARES
+    fastapi_app.add_middleware(DbSessionMiddleware)
+    fastapi_app.add_middleware(ErrorHandlerMiddleware)
 
     # EXCEPTION HANDLERS
-    fastapi_app_instance.add_exception_handler(ValueError, value_error_handler)
+    fastapi_app.add_exception_handler(ValueError, value_error_handler)
+    fastapi_app.add_exception_handler(BfoApiException, bfo_api_exception_handler)
+    fastapi_app.add_exception_handler(
+        BfoTooManyRequestsException, bfo_too_many_requests_exception_handler
+    )
 
     # API router
-    fastapi_app_instance.include_router(router)
+    fastapi_app.include_router(router)
 
-    return fastapi_app_instance
+    return fastapi_app
 
 
 app = create_application()

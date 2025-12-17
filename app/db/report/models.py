@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import Dict, Any
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-from sqlalchemy import DateTime, Integer, ForeignKey
+from sqlalchemy import Date, DateTime, Integer, ForeignKey
 from sqlalchemy.dialects.postgresql import JSONB
 
 from app.db.sqlalchemy import Base
@@ -21,6 +21,11 @@ class ReportModel(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=func.now()
     )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=func.now(), onupdate=func.now()
+    )
+    present_date: Mapped[date] = mapped_column(Date)
+    organization_sheet: Mapped[Dict[str, Any]] = mapped_column(JSONB, nullable=True)
     balance_sheet: Mapped[Dict[str, Any]] = mapped_column(JSONB, nullable=True)
     financial_sheet: Mapped[Dict[str, Any]] = mapped_column(JSONB, nullable=True)
 

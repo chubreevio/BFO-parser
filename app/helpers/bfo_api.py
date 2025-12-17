@@ -1,7 +1,10 @@
-from typing import Dict, Any, Tuple, Union
+from typing import Dict, Any, Literal, Tuple, Union
 from aiohttp import ClientSession
+from asyncio import TimeoutError
 
-from app.schemas.bfo_api import SearchOrganizationResult
+from fastapi import HTTPException
+
+from app.schemas.bfo_api import GetDetailsResult, SearchOrganizationResult
 from app.settings import settings
 
 
@@ -21,15 +24,14 @@ def get_headers_for_bfo_request(headers: Dict[str, Any] = {}) -> Dict[str, Any]:
 
 async def search_organization_by_inn(
     session: ClientSession, inn: str
-) -> Tuple[bool, Union[str, SearchOrganizationResult]]:
+) -> SearchOrganizationResult:
     """
     Поиск организации по ИНН
 
     :param session: Сессия из aiohttp
     :param inn: ИНН организации
 
-    :return: Успшно или нет
-    :return: Текст ошибки (если не успешно) модель результата поиска
+    :return: Модель результата поиска
     """
     # TODO добавить проверку из redis
     url = f"{settings.BFO_URL}/advanced-search/organizations/search"
@@ -40,8 +42,87 @@ async def search_organization_by_inn(
         proxy=settings.PROXY_URL,
         headers=get_headers_for_bfo_request(),
     ) as response:
+        if response.status == 429:
+            raise HTTPException(
+                status_code=429, detail={"message": "Слишком много запросов"}
+            )
         if response.status != 200:
             error = await response.text()
-            return False, error
+            raise HTTPException(status_code=response.status, detail={"message": error})
         result = await response.json()
-        return True, SearchOrganizationResult.model_validate(result)
+        return SearchOrganizationResult.model_validate(result)
+
+
+async def get_details_by_organization_id(
+    session: ClientSession, organization_id: int
+) -> GetDetailsResult:
+    """
+    Получение списка доступных отчётов
+
+    :param session: Сессия из aiohttp
+    :param organization_id: id организации
+
+    :return: Модель результата поиска
+    """
+    # TODO добавить проверку из redis
+    url = f"{settings.BFO_URL}/nbo/organizations/{organization_id}/bfo"
+    async with session.get(
+        url, proxy=settings.PROXY_URL, headers=get_headers_for_bfo_request()
+    ) as response:
+        if response.status == 429:
+            raise HTTPException(
+                status_code=429, detail={"message": "Слишком много запросов"}
+            )
+        if response.status != 200:
+            error = await response.text()
+            raise HTTPException(status_code=response.status, detail={"message": error})
+        result = await response.json()
+        return GetDetailsResult.model_validate(result)
+
+
+async def get_bfo_report(
+    session: ClientSession,
+    organization_id: int,
+    details_id: int,
+    period: str,
+    report_type: Literal["XLS", "WORD"] = "XLS",
+) -> bytes:
+    """
+    Получение архива с отчётом
+
+    :param session: Сессия из aiohttp
+    :param organization_id: id организации
+    :param details_id: id отчёта
+    :param period: Год отчёта
+    :param report_type: Формат отчета (xlsx или docx)
+
+    :return: Архив с отчётом
+    """
+    url = f"{settings.BFO_URL}/download/bfo/{organization_id}"
+    params = {
+        "auditReport": False,
+        "balance": True,
+        "capitalChange": False,
+        "clarification": False,
+        "targetedFundsUsing": False,
+        "detailsId": details_id,
+        "financialResult": True,
+        "fundsMovement": False,
+        "type": report_type,
+        "period": period,
+    }
+    async with session.get(
+        url,
+        params=params,
+        proxy=settings.PROXY_URL,
+        headers=get_headers_for_bfo_request(),
+    ) as response:
+        if response.status == 429:
+            raise HTTPException(
+                status_code=429, detail={"message": "Слишком много запросов"}
+            )
+        if response.status != 200:
+            error = await response.text()
+            raise HTTPException(status_code=response.status, detail={"message": error})
+        file_content = await response.read()
+        return file_content
