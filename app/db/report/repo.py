@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict, Any
-from sqlalchemy import select, insert
+from sqlalchemy import select, insert, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import func
 
@@ -123,7 +123,7 @@ class ReportRepo:
 
     async def update_or_create_report_from_bfo(
         self, organization_id: int, details: List[DetailResult]
-    ):
+    ) -> None:
         """
         Обновить или создать отчёты в БД из результата запроса к БФО
 
@@ -132,19 +132,24 @@ class ReportRepo:
         """
         for detail in details:
             for correction in detail.corrections:
+                # обновляем данные у отчёта
                 query = (
-                    select(ReportModel)
+                    update(ReportModel)
                     .where(
                         ReportModel.organization_id == organization_id,
                         ReportModel.report_year == detail.period,
                         ReportModel.present_date == correction.date_present,
                     )
-                    .limit(1)
+                    .values(
+                        organization_sheet=correction.organization_info,
+                        balance_sheet=correction.balance,
+                        financial_sheet=correction.financial,
+                    )
+                    .returning(ReportModel.id)
                 )
-                row = await self._crud._session.execute(query)
-                row = row.scalar_one_or_none()
-                if row is None:
-                    # отчёт не найден
+                updated_row = await self._crud._session.execute(query)
+                if updated_row is None:
+                    # отчёт не найден, создадим новую запись
                     query = insert(ReportModel).values(
                         organization_id=organization_id,
                         report_year=detail.period,
@@ -154,8 +159,3 @@ class ReportRepo:
                         financial_sheet=correction.financial,
                     )
                     await self._crud._session.execute(query)
-                else:
-                    # обновляем данные у отчёта
-                    row.organization_sheet = correction.organization_info
-                    row.balance_sheet = correction.balance
-                    row.financial_sheet = correction.financial

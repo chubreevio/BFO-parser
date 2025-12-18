@@ -8,8 +8,7 @@ from app.helpers.bfo_api import (
     search_organization_by_inn,
     get_details_by_organization_id,
 )
-
-# from app.logger import logger
+from app.logger import logger
 from app.schemas.query_params import GetReportParams
 from app.schemas.responses import GetReportResponse
 from app.settings import settings
