@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Any, Dict, Optional
-from sqlalchemy import insert
+from sqlalchemy import insert, null
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.crud import CRUD
@@ -15,7 +15,6 @@ class HistoryRepo:
 
     async def create_history(
         self,
-        inn: str,
         request: Dict[str, Any],
         status_code: int,
         response: Dict[str, Any],
@@ -26,7 +25,6 @@ class HistoryRepo:
         """
         Создание записи в таблице логирования запросов к методу /api/v1/report
 
-        :param inn: ИНН организации
         :param request: Данные из request(отфильтрованные)
         :param status_code: Код ответа
         :param response: Тело ответа
@@ -35,12 +33,11 @@ class HistoryRepo:
         :param params: Параметры запроса
         """
         query = insert(HistoryModel).values(
-            inn=inn,
             request=request,
             status_code=status_code,
             response=response,
             started_at=started_at,
             finished_at=finished_at,
-            params=params,
+            params=params if params is not None else null(),
         )
         await self._crud._session.execute(query)

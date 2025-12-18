@@ -70,7 +70,7 @@ def create_application() -> FastAPI:
     """Create configured server application instance."""
     fastapi_app = FastAPI(title="bfo parser", lifespan=lifespan)
 
-    # MIDDLEWARES
+    # MIDDLEWARES (3->2->1->endpoint->1->2->3)
     fastapi_app.add_middleware(EndpointLoggingMiddleware)
     fastapi_app.add_middleware(DbSessionMiddleware)
     fastapi_app.add_middleware(ErrorHandlerMiddleware)

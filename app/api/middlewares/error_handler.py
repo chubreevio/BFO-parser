@@ -8,7 +8,6 @@ from app.logger import logger
 
 class ErrorHandlerMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-
         try:
             return await call_next(request)
         except Exception as ex:

@@ -41,11 +41,9 @@ class EndpointLoggingMiddleware(BaseHTTPMiddleware):
                             if field in scope:
                                 filtered_scope[field] = scope[field]
                         body = json.loads(response_body.decode("utf-8"))
-                        inn = query_params.get("inn", None)
-                        if inn is not None and body is not None:
+                        if body is not None:
                             history_repo = HistoryRepo(db_session)
                             await history_repo.create_history(
-                                inn,
                                 filtered_scope,
                                 status_code,
                                 body,

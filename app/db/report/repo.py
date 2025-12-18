@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any
 from sqlalchemy import select, insert, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -5,8 +6,10 @@ from sqlalchemy.sql import func
 
 from app.db.crud import CRUD
 from app.db.report.models import ReportModel
+from app.logger import logger
 from app.schemas.bfo_api import DetailResult
 from app.schemas.db.report import Report
+from app.settings import settings
 
 
 class ReportRepo:
@@ -92,7 +95,7 @@ class ReportRepo:
         row = await self._crud._session.execute(query)
         return Report.from_orm(row.scalar_one_or_none())
 
-    async def get_max_reports_by_organization_id_and_period(
+    async def get_max_reports_by_organization_id(
         self, organization_id: int
     ) -> List[Report]:
         """
@@ -118,6 +121,34 @@ class ReportRepo:
         )
         rows = await self._crud._session.execute(query)
         return [Report.from_orm_not_none(row) for row in rows.scalars().all()]
+
+    async def is_all_periods_available(
+        self, organization_id: int, periods: List[int]
+    ) -> List[int]:
+        """
+        Проверка, все ли необходимые отчёты есть в БД (и они не старше 7 дней)
+
+        :param organization_id: id организации
+        :param periods: Список годов
+
+        :return: Список не найденных годов
+        """
+        query = (
+            select(ReportModel.report_year)
+            .filter(
+                ReportModel.organization_id == organization_id,
+                ReportModel.report_year.in_(periods),
+                ReportModel.updated_at
+                >= (
+                    datetime.now(timezone.utc)
+                    - timedelta(days=settings.REPORT_AVAILABLE_DAYS)
+                ),
+            )
+            .distinct()
+        )
+        rows = await self._crud._session.execute(query)
+        founded_periods = rows.scalars().all()
+        return list(set(periods) - set(founded_periods))
 
     """UPDATE"""
 

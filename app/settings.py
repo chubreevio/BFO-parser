@@ -16,7 +16,10 @@ class AppSettings(BaseSettings):
     BFO_URL: str
     PROXY_URL: Optional[str] = None
     REPORT_AVAILABLE_DAYS: int = 7
-    REQUEST_LOGGING_MIDDLEWARE_ENDPOINTS: Set[str] = {"GET:/api/v1/report"}
+    REQUEST_LOGGING_MIDDLEWARE_ENDPOINTS: Set[str] = {
+        "GET:/api/v1/report",
+        "GET:/api/v2/report",
+    }
     REQUEST_LOGGING_ALLOWED_FILEDS: Set[str] = {
         "type",
         "asgi",

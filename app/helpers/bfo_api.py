@@ -83,52 +83,52 @@ async def get_details_by_organization_id(
         return GetDetailsResult.model_validate(result)
 
 
-@check_bfo_timeout
-async def get_bfo_report(
-    redis: Pool,
-    session: ClientSession,
-    organization_id: int,
-    details_id: int,
-    period: str,
-    report_type: Literal["XLS", "WORD"] = "XLS",
-) -> bytes:
-    """
-    Получение архива с отчётом
+# @check_bfo_timeout
+# async def get_bfo_report(
+#     redis: Pool,
+#     session: ClientSession,
+#     organization_id: int,
+#     details_id: int,
+#     period: str,
+#     report_type: Literal["XLS", "WORD"] = "XLS",
+# ) -> bytes:
+#     """
+#     Получение архива с отчётом
 
-    :param redis: Пул подключений к redis
-    :param session: Сессия из aiohttp
-    :param organization_id: id организации
-    :param details_id: id отчёта
-    :param period: Год отчёта
-    :param report_type: Формат отчета (xlsx или docx)
+#     :param redis: Пул подключений к redis
+#     :param session: Сессия из aiohttp
+#     :param organization_id: id организации
+#     :param details_id: id отчёта
+#     :param period: Год отчёта
+#     :param report_type: Формат отчета (xlsx или docx)
 
-    :return: Архив с отчётом
-    """
-    url = f"{settings.BFO_URL}/download/bfo/{organization_id}"
-    params = {
-        "auditReport": False,
-        "balance": True,
-        "capitalChange": False,
-        "clarification": False,
-        "targetedFundsUsing": False,
-        "detailsId": details_id,
-        "financialResult": True,
-        "fundsMovement": False,
-        "type": report_type,
-        "period": period,
-    }
-    async with session.get(
-        url,
-        params=params,
-        proxy=settings.PROXY_URL,
-        headers=get_headers_for_bfo_request(),
-    ) as response:
-        if response.status == 429:
-            raise BfoTooManyRequestsException(
-                detail={"message": "Слишком много запросов"}
-            )
-        if response.status != 200:
-            error = await response.text()
-            raise HTTPException(status_code=response.status, detail={"message": error})
-        file_content = await response.read()
-        return file_content
+#     :return: Архив с отчётом
+#     """
+#     url = f"{settings.BFO_URL}/download/bfo/{organization_id}"
+#     params = {
+#         "auditReport": False,
+#         "balance": True,
+#         "capitalChange": False,
+#         "clarification": False,
+#         "targetedFundsUsing": False,
+#         "detailsId": details_id,
+#         "financialResult": True,
+#         "fundsMovement": False,
+#         "type": report_type,
+#         "period": period,
+#     }
+#     async with session.get(
+#         url,
+#         params=params,
+#         proxy=settings.PROXY_URL,
+#         headers=get_headers_for_bfo_request(),
+#     ) as response:
+#         if response.status == 429:
+#             raise BfoTooManyRequestsException(
+#                 detail={"message": "Слишком много запросов"}
+#             )
+#         if response.status != 200:
+#             error = await response.text()
+#             raise HTTPException(status_code=response.status, detail={"message": error})
+#         file_content = await response.read()
+#         return file_content
