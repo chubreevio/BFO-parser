@@ -1,5 +1,5 @@
 from typing import Optional, Dict, Any
-from datetime import datetime, date
+from datetime import datetime
 from pydantic import BaseModel
 
 from app.db.history.models import HistoryModel

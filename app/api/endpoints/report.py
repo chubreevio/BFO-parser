@@ -8,7 +8,6 @@ from app.helpers.bfo_api import (
     search_organization_by_inn,
     get_details_by_organization_id,
 )
-from app.logger import logger
 from app.schemas.query_params import GetReportParams
 from app.schemas.responses import GetReportResponse
 from app.settings import settings
@@ -38,7 +37,9 @@ async def get_report_handler(request: Request, params: GetReportParams = Query()
                 request.app.state.redis, session, params.inn
             )
             organization = await organization_repo.create_organization(
-                organization_result.id, params.inn
+                organization_result.id,
+                params.inn,
+                organization_result.model_dump(exclude={"id"}),
             )
         # найти дату последнего отчёта для этой организации
         last_report = await report_repo.get_last_report_by_organization_id(
@@ -72,6 +73,7 @@ async def get_report_handler(request: Request, params: GetReportParams = Query()
                     organization.id, period
                 )
                 result["periods"].append({"year": period, "reports": reports})
+    result.update(organization.info)
     return result
 
 
@@ -95,7 +97,9 @@ async def get_report_v2_handler(request: Request, params: GetReportParams = Quer
                 request.app.state.redis, session, params.inn
             )
             organization = await organization_repo.create_organization(
-                organization_result.id, params.inn
+                organization_result.id,
+                params.inn,
+                organization_result.model_dump(exclude={"id"}),
             )
         if params.periods is None:
             # Отправить последний отчёт
@@ -125,7 +129,6 @@ async def get_report_v2_handler(request: Request, params: GetReportParams = Quer
             non_available_periods = await report_repo.is_all_periods_available(
                 organization.id, params.periods
             )
-            logger.info(non_available_periods)
             if len(non_available_periods) > 0:
                 # есть отчёты, которые нужно обновить
                 organization_details = await get_details_by_organization_id(
@@ -140,5 +143,5 @@ async def get_report_v2_handler(request: Request, params: GetReportParams = Quer
                     organization.id, period
                 )
                 result["periods"].append({"year": period, "reports": reports})
-
+    result.update(organization.info)
     return result

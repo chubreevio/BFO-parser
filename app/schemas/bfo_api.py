@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field, model_validator
 
 
@@ -12,14 +12,24 @@ class OrganizationResult(BaseModel):
 class SearchOrganizationResult(BaseModel):
     """Результат поиска организации по ИНН"""
 
-    # content: List[OrganizationResult]
     id: int
+    short_name: str = Field(alias="shortName")
+    ogrn: str
+    index: str
+    region: Optional[str] = None
+    district: Optional[str] = None
+    city: Optional[str] = None
+    settlement: Optional[str] = None
+    street: Optional[str] = None
+    house: Optional[str] = None
+    building: Optional[str] = None
+    office: Optional[str] = None
 
     @model_validator(mode="before")
     @classmethod
     def get_last_correction(cls, data: Dict[str, Any]):
         try:
-            data["id"] = data["content"][0]["id"]
+            data = data["content"][0]
         except:
             pass
         return data

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 from datetime import datetime
 from pydantic import BaseModel
 
@@ -11,11 +11,15 @@ class Organization(BaseModel):
     id: int
     inn: str
     created_at: datetime
+    info: Dict[str, Any]
 
     @classmethod
     def from_orm_not_none(cls, organization: OrganizationModel) -> "Organization":
         return cls(
-            id=organization.id, inn=organization.inn, created_at=organization.created_at
+            id=organization.id,
+            inn=organization.inn,
+            created_at=organization.created_at,
+            info=organization.info,
         )
 
     @classmethod

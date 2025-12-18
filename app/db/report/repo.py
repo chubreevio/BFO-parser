@@ -179,7 +179,7 @@ class ReportRepo:
                     .returning(ReportModel.id)
                 )
                 updated_row = await self._crud._session.execute(query)
-                if updated_row is None:
+                if len(updated_row.scalars().all()) == 0:
                     # отчёт не найден, создадим новую запись
                     query = insert(ReportModel).values(
                         organization_id=organization_id,

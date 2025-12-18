@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,7 +15,9 @@ class OrganizationRepo:
 
     """CREATE"""
 
-    async def create_organization(self, organization_id: int, inn: str) -> Organization:
+    async def create_organization(
+        self, organization_id: int, inn: str, info: Dict[str, Any]
+    ) -> Organization:
         """
         Создание записи организации в БД
 
@@ -24,9 +26,9 @@ class OrganizationRepo:
 
         :return: Модель организации
         """
-        query = insert(OrganizationModel).values(id=organization_id, inn=inn)
+        query = insert(OrganizationModel).values(id=organization_id, inn=inn, info=info)
         await self._crud._session.execute(query)
-        query = select(OrganizationModel).where(OrganizationModel.id==organization_id)
+        query = select(OrganizationModel).where(OrganizationModel.id == organization_id)
         row = await self._crud._session.execute(query)
         return Organization.from_orm_not_none(row.scalar_one())
 
