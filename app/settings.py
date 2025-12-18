@@ -1,7 +1,7 @@
 """Application settings."""
 
+from typing import Optional, Set
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional
 
 
 class AppSettings(BaseSettings):
@@ -16,6 +16,20 @@ class AppSettings(BaseSettings):
     BFO_URL: str
     PROXY_URL: Optional[str] = None
     REPORT_AVAILABLE_DAYS: int = 7
+    REQUEST_LOGGING_MIDDLEWARE_ENDPOINTS: Set[str] = {"GET:/api/v1/report"}
+    REQUEST_LOGGING_ALLOWED_FILEDS: Set[str] = {
+        "type",
+        "asgi",
+        "http_version",
+        "server",
+        "client",
+        "scheme",
+        "method",
+        "root_path",
+        "path",
+        # "query_string",
+        "path_params",
+    }
 
     # REDIS
     REDIS_HOST: str

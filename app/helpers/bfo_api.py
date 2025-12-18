@@ -1,9 +1,10 @@
-from typing import Dict, Any, Literal, Tuple, Union
+from typing import Dict, Any, Literal
 from aiohttp import ClientSession
-from asyncio import TimeoutError
-
+from asyncio_redis import Pool
 from fastapi import HTTPException
 
+from app.exceptions import BfoTooManyRequestsException
+from app.helpers.decorators import check_bfo_timeout
 from app.schemas.bfo_api import GetDetailsResult, SearchOrganizationResult
 from app.settings import settings
 
@@ -22,18 +23,19 @@ def get_headers_for_bfo_request(headers: Dict[str, Any] = {}) -> Dict[str, Any]:
     return headers
 
 
+@check_bfo_timeout
 async def search_organization_by_inn(
-    session: ClientSession, inn: str
+    redis: Pool, session: ClientSession, inn: str
 ) -> SearchOrganizationResult:
     """
     Поиск организации по ИНН
 
+    :param redis: Пул подключений к redis
     :param session: Сессия из aiohttp
     :param inn: ИНН организации
 
     :return: Модель результата поиска
     """
-    # TODO добавить проверку из redis
     url = f"{settings.BFO_URL}/advanced-search/organizations/search"
     params = {"query": inn, "page": 0, "size": 20}
     async with session.get(
@@ -43,8 +45,8 @@ async def search_organization_by_inn(
         headers=get_headers_for_bfo_request(),
     ) as response:
         if response.status == 429:
-            raise HTTPException(
-                status_code=429, detail={"message": "Слишком много запросов"}
+            raise BfoTooManyRequestsException(
+                detail={"message": "Слишком много запросов"}
             )
         if response.status != 200:
             error = await response.text()
@@ -53,25 +55,26 @@ async def search_organization_by_inn(
         return SearchOrganizationResult.model_validate(result)
 
 
+@check_bfo_timeout
 async def get_details_by_organization_id(
-    session: ClientSession, organization_id: int
+    redis: Pool, session: ClientSession, organization_id: int
 ) -> GetDetailsResult:
     """
     Получение списка доступных отчётов
 
+    :param redis: Пул подключений к redis
     :param session: Сессия из aiohttp
     :param organization_id: id организации
 
     :return: Модель результата поиска
     """
-    # TODO добавить проверку из redis
     url = f"{settings.BFO_URL}/nbo/organizations/{organization_id}/bfo"
     async with session.get(
         url, proxy=settings.PROXY_URL, headers=get_headers_for_bfo_request()
     ) as response:
         if response.status == 429:
-            raise HTTPException(
-                status_code=429, detail={"message": "Слишком много запросов"}
+            raise BfoTooManyRequestsException(
+                detail={"message": "Слишком много запросов"}
             )
         if response.status != 200:
             error = await response.text()
@@ -80,7 +83,9 @@ async def get_details_by_organization_id(
         return GetDetailsResult.model_validate(result)
 
 
+@check_bfo_timeout
 async def get_bfo_report(
+    redis: Pool,
     session: ClientSession,
     organization_id: int,
     details_id: int,
@@ -90,6 +95,7 @@ async def get_bfo_report(
     """
     Получение архива с отчётом
 
+    :param redis: Пул подключений к redis
     :param session: Сессия из aiohttp
     :param organization_id: id организации
     :param details_id: id отчёта
@@ -118,8 +124,8 @@ async def get_bfo_report(
         headers=get_headers_for_bfo_request(),
     ) as response:
         if response.status == 429:
-            raise HTTPException(
-                status_code=429, detail={"message": "Слишком много запросов"}
+            raise BfoTooManyRequestsException(
+                detail={"message": "Слишком много запросов"}
             )
         if response.status != 200:
             error = await response.text()

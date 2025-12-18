@@ -1,6 +1,7 @@
 from typing import List, Optional, Dict, Any
 from sqlalchemy import select, insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import func
 
 from app.db.crud import CRUD
 from app.db.report.models import ReportModel
@@ -70,7 +71,7 @@ class ReportRepo:
             .order_by(ReportModel.present_date)
         )
         rows = await self._crud._session.execute(query)
-        return [Report.from_orm(row) for row in rows.scalars().all()]
+        return [Report.from_orm_not_none(row) for row in rows.scalars().all()]
 
     async def get_last_report_by_organization_id(
         self, organization_id: int
@@ -90,6 +91,33 @@ class ReportRepo:
         )
         row = await self._crud._session.execute(query)
         return Report.from_orm(row.scalar_one_or_none())
+
+    async def get_max_reports_by_organization_id_and_period(
+        self, organization_id: int
+    ) -> List[Report]:
+        """
+        Найти последний отчёт организации (может быть несколько за один год)
+
+        :param organization_id: id организации
+
+        :param: Список отчётов за последний год
+        """
+        # подзапрос для поиска максимального года
+        subquery = (
+            select(func.max(ReportModel.report_year))
+            .where(ReportModel.organization_id == organization_id)
+            .scalar_subquery()
+        )
+        query = (
+            select(ReportModel)
+            .where(
+                ReportModel.organization_id == organization_id,
+                ReportModel.report_year == subquery,
+            )
+            .order_by(ReportModel.present_date)
+        )
+        rows = await self._crud._session.execute(query)
+        return [Report.from_orm_not_none(row) for row in rows.scalars().all()]
 
     """UPDATE"""
 

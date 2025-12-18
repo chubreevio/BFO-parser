@@ -2,7 +2,7 @@ import time
 from typing import Optional
 from asyncio_redis import Pool
 
-from app.logger import logger
+# from app.logger import logger
 from app.settings import settings
 
 
@@ -30,4 +30,4 @@ async def bfo_timeout_left(redis: Pool) -> Optional[int]:
     value = await redis.get(settings.REDIS_BFO_TIMEOUT_KEY)
     if value is None:
         return None
-    return int(time.time()) - int(value)
+    return settings.REDIS_BFO_TIMEOUT_SECONDS - (int(time.time()) - int(value))

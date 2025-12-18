@@ -1,13 +1,14 @@
+from typing import Any
 from fastapi import HTTPException
 
 
 class BfoTooManyRequestsException(HTTPException):
     """Исключение для Too Many Requests"""
 
-    def __init__(self, detail: str = "Слишком много запросов", headers: dict = None):
+    def __init__(self, detail: Any = "Слишком много запросов", headers: dict = None):
         super().__init__(
             status_code=429,
-            detail=detail,
+            detail={"detail": detail},
             headers=headers,
         )
 

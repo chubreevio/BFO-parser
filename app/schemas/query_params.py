@@ -3,7 +3,6 @@ from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.helpers.functions import validate_inn
-from app.logger import logger
 
 
 class GetReportParams(BaseModel):

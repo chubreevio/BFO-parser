@@ -27,6 +27,5 @@ class DbSessionMiddleware(BaseHTTPMiddleware):
                 await db_session.rollback()
             raise
         finally:
-            # logger.info(f"Pool after: {request.app.state.db_engine.pool.checkedout()}")
             if db_session:
                 await db_session.close()

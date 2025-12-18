@@ -1,8 +1,8 @@
+from datetime import datetime
+from typing import Optional, Dict, Any
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String, DateTime, Integer
 from sqlalchemy.dialects.postgresql import JSONB
-from datetime import datetime
-from typing import Optional, Dict, Any
 
 from app.db.sqlalchemy import Base
 
@@ -13,12 +13,9 @@ class HistoryModel(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, unique=True)
     inn: Mapped[str] = mapped_column(String(12), index=True)
-    request: Mapped[Optional[Dict[str, Any]]] = mapped_column(
-        JSONB, nullable=True
-    )
+    request: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
+    params: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
     status_code: Mapped[int] = mapped_column(Integer)
-    response: Mapped[Optional[Dict[str, Any]]] = mapped_column(
-        JSONB, nullable=True
-    )
+    response: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
