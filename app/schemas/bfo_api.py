@@ -2,6 +2,8 @@ from datetime import date
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field, model_validator
 
+from app.logger import logger
+
 
 class OrganizationResult(BaseModel):
     """Информация об организации"""
@@ -48,7 +50,7 @@ class CorrectionResult(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def get_last_correction(cls, data: Dict[str, Any]):
-        return data["correction"]
+        return data.get("correction", data)
 
 
 class DetailResult(BaseModel):

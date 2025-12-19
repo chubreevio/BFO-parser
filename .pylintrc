@@ -10,3 +10,4 @@ disable=
     W0212, # protected-access
     W0101, # unreachable
     W0105, # pointless-string-statement
+    C0415, # import-outside-toplevel

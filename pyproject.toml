@@ -1,0 +1,5 @@
+[tool.pytest.ini_options]
+pythonpath = [".","app"]
+asyncio_mode="auto"
+addopts ="-v -s -p no:warnings -p no:cacheprovider --color=yes"
+filterwarnings = ["ignore::pytest.PytestCacheWarning","ignore::pytest.PytestWarning"]

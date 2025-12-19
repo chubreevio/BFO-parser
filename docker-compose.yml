@@ -30,7 +30,6 @@ x-backend: &backend
   volumes:
     - ./:/app
     - ./.docker/user.conf/.gitconfig:/root/.gitconfig
-    # - ./.docker/ssl:/etc/ssl
   networks:
     - bfo-parser
 
@@ -42,44 +41,24 @@ services:
         hard: 0
         soft: 0
     container_name: bfo-parser-api--app
-    # command: bash -c "uvicorn app.startup:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips='*' --workers 2"
+    # Основная команда: сначала тесты, потом приложение
     command: bash -c "uvicorn app.startup:app --host 0.0.0.0 --port 8000 --reload --proxy-headers --forwarded-allow-ips='*' --log-level debug"
     ports:
       - "8000:8000"
     depends_on:
       - bfo-parser-api--db
-
-  # bfo-parser-api--webserver:
-  #   <<: *jsonlog-driver
-  #   image: bfo-parser-api--webserver
-  #   container_name: bfo-parser-api--webserver
-  #   build:
-  #     args:
-  #       APP_CONTAINER_NAME: app
-  #       APP_ROOT: /app
-  #       # ENVIRONMENT: development
-  #       APP_HOSTNAME: docker-dmz
-  #     context: .
-  #     dockerfile: .docker/Dockerfiles/webserver.Dockerfile
-  #   environment:
-  #     TZ: Asia/Krasnoyarsk
-  #   restart: unless-stopped
-  #   ports:
-  #     - "28282:80"
-  #     - "24282:443"
-  #   volumes:
-  #     - ./:/app
-  #     - ./ssl:/etc/ssl/
-  #   networks:
-  #     - bfo-parser
+      - bfo-parser-api--db-test
+    environment:
+      - TZ=Asia/Krasnoyarsk
+      # Переменные будут переопределены в команде
+      - DATABASE_URL=postgresql://${DB_USERNAME}:${DB_PASSWORD}@bfo-parser-api--db:5432/${DB_DATABASE}
+      - REDIS_URL=redis://bfo-parser-api--redis:6379
 
   bfo-parser-api--db:
     <<: *jsonlog-driver
     image: postgres:15.3-alpine
     container_name: bfo-parser-api--db
     environment:
-      # - TZ=Asia/Krasnoyarsk
-      # - PGTZ=Asia/Krasnoyarsk
       - POSTGRES_USER=${DB_USERNAME}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_DATABASE}
@@ -99,23 +78,36 @@ services:
       start_period: 5s
     networks:
       - bfo-parser
-      
+
+  # Тестовая БД - запускается только на время тестов
+  bfo-parser-api--db-test:
+    <<: *jsonlog-driver
+    image: postgres:15.3-alpine
+    container_name: bfo-parser-api--db-test
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_TEST_PASSWORD}
+      - POSTGRES_DB=${DB_DATABASE}
+    ports:
+      - "${DB_TEST_EXTERNAL_PORT}:5432"
+    restart: "no"  # Не перезапускаем автоматически
+    tmpfs:
+      - /var/lib/postgresql/data
+    networks:
+      - bfo-parser
+
   bfo-parser-api--redis:
     <<: *jsonlog-driver
     image: redis:7.2.10-alpine
     container_name: bfo-parser-api--redis
     command: --notify-keyspace-events Ex
-    # expose:
-    #   - "${REDIS_PORT}"
     restart: always
     volumes:
       - ./.storages/redisdata:/data
     networks:
       - bfo-parser
 
-
 volumes:
-  # ssl:
   dbdata:
   cache:
     driver: local

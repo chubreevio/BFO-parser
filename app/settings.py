@@ -49,5 +49,7 @@ class AppSettings(BaseSettings):
     DB_PASSWORD: str
     POSTGRES_DSN: str
 
+    # DB TEST
+    TEST_POSTGRES_DSN: str
 
 settings = AppSettings()

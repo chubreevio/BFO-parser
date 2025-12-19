@@ -1,10 +1,11 @@
 from typing import Dict, Any, Literal
 from aiohttp import ClientSession
 from asyncio_redis import Pool
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from app.exceptions import BfoTooManyRequestsException
 from app.helpers.decorators import check_bfo_timeout
+from app.logger import logger
 from app.schemas.bfo_api import GetDetailsResult, SearchOrganizationResult
 from app.settings import settings
 
@@ -52,6 +53,11 @@ async def search_organization_by_inn(
             error = await response.text()
             raise HTTPException(status_code=response.status, detail={"message": error})
         result = await response.json()
+        if len(result["content"]) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"message": "Организация с ИНН {inn} не найдена"},
+            )
         return SearchOrganizationResult.model_validate(result)
 
 

@@ -30,3 +30,4 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
                     indent=4,
                 )
             )
+            raise

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any
 from sqlalchemy import select, insert, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,7 +22,7 @@ class ReportRepo:
         self,
         organization_id: int,
         year: int,
-        present_date: str,
+        present_date: date,
         organization: Dict[str, Any],
         balance: Dict[str, Any],
         finance: Dict[str, Any],
@@ -48,7 +48,7 @@ class ReportRepo:
             financial_sheet=finance,
         )
         result = await self._crud._session.execute(query)
-        query = select(ReportModel).where(id=result.inserted_primary_key)
+        query = select(ReportModel).where(ReportModel.id==result.inserted_primary_key[0])
         row = await self._crud._session.execute(query)
         return Report.from_orm_not_none(row.scalar_one())
 
