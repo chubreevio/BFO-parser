@@ -210,3 +210,7 @@ alembic upgrade head
 | `DB_DATABASE` | Имя базы данных | - |
 | `DB_USERNAME` | Пользователь БД | - |
 | `DB_PASSWORD` | Пароль БД | - |
+| `TEST_POSTGRES_DSN` | Строка подключения к тестовой БД | - |
+| `DB_TEST_HOSTNAME` | Хост тестовой БД | - |
+| `DB_TEST_PASSWORD` | Пароль тестовой БД | - |
+| `DB_TEST_EXTERNAL_PORT` | Внешний порт тестовой БД | - |
