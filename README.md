@@ -87,6 +87,12 @@ POSTGRES_DSN=postgres://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOSTNAME}:${DB_PORT}/
 # Настройки
 SQL_DEBUG=false
 REPORT_AVAILABLE_DAYS=7
+
+# Тесты
+DB_TEST_HOSTNAME=bfo-parser-api--db-test
+DB_TEST_EXTERNAL_PORT=25433
+DB_TEST_PASSWORD=teststrongpassword
+TEST_POSTGRES_DSN=postgres://${DB_USERNAME}:${DB_TEST_PASSWORD}@${DB_TEST_HOSTNAME}:${DB_PORT}/${DB_DATABASE}
 ```
 
 4. Запустите приложение:
